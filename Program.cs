@@ -13,10 +13,12 @@ public class Program
         byte[] XTestCompressed = Fetch("http://yann.lecun.com/exdb/mnist/t10k-images-idx3-ubyte.gz");
         byte[] YTestCompressed = Fetch("http://yann.lecun.com/exdb/mnist/t10k-labels-idx1-ubyte.gz");
 
-        byte[] XTrain = Decompress(XTrainCompressed).Skip(0x10).ToArray();
-        byte[] YTrain = Decompress(YTrainCompressed).Skip(8).ToArray();
-        byte[] XTest = Decompress(XTestCompressed).Skip(0x10).ToArray();
-        byte[] YTest = Decompress(YTestCompressed).Skip(8).ToArray();
+        var XTrain = ReshapeData(Decompress(XTrainCompressed).Skip(0x10).ToArray());
+        var YTrain = Decompress(YTrainCompressed).Skip(8).ToArray();
+        var XTest = ReshapeData(Decompress(XTestCompressed).Skip(0x10).ToArray());
+        var YTest = Decompress(YTestCompressed).Skip(8).ToArray();
+
+        PrintNumber(XTrain[0], YTrain[0]);
     }
 
     private static byte[] Fetch(string url)
@@ -58,5 +60,33 @@ public class Program
             gzipStream.CopyTo(decompressedStream);
             return decompressedStream.ToArray();
         }
+    }
+
+    private static byte[][] ReshapeData(byte[] data)
+    { 
+        var reshapedData = new byte[data.Length / 784][];
+        for (var i = 0; i < data.Length; i += 784)
+        {
+            reshapedData[i / 784] = data.Skip(i).Take(784).ToArray();
+        }
+
+        return reshapedData;
+    }
+
+    private static void PrintNumber(byte[] numData, byte labelData)
+    {
+        for (var i = 0; i < numData.Length; i += 1)
+        {
+            if (i != 0 && i % 28 == 0)
+            {
+                Console.WriteLine();
+            }
+
+            Console.Write(numData[i] > 0 ? 1 : 0);
+        }
+
+        Console.WriteLine();
+
+        Console.Write($"Label: {labelData}");
     }
 }
