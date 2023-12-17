@@ -14,19 +14,16 @@ public class Program
         byte[] YTestCompressed = Fetch("http://yann.lecun.com/exdb/mnist/t10k-labels-idx1-ubyte.gz");
 
         var XTrain = ReshapeData(Decompress(XTrainCompressed).Skip(0x10).ToArray());
-        var YTrain = Decompress(YTrainCompressed).Skip(8).Select(x => (float)x).ToArray();
+        var YTrain = Decompress(YTrainCompressed).Skip(8).Select(x => (double)x).ToArray();
         var XTest = ReshapeData(Decompress(XTestCompressed).Skip(0x10).ToArray());
-        var YTest = Decompress(YTestCompressed).Skip(8).Select(x => (float)x).ToArray();
+        var YTest = Decompress(YTestCompressed).Skip(8).Select(x => (double)x).ToArray();
 
-        // PrintNumber(XTrain, YTrain, 4);
+        var samples = 10;
 
-        var samples = 1;
-        var XTrainBatch = TransposeMatrix(GetBatch(XTrain, samples, 0));
+        var XTrainBatch = MatrixHelper.Multiply((double)1 / 255, TransposeMatrix(GetBatch(XTrain, samples, 0)));
         var YTrainBatch = YTrain.Take(samples).ToArray();
 
-        Console.WriteLine($"{XTrainBatch.GetLength(0)}, {XTrainBatch.GetLength(1)}");
-
-        /*
+/*
         for (var i = 0; i < XTrainBatch.GetLength(0); i++)
         {
             Console.WriteLine();
@@ -35,15 +32,36 @@ public class Program
                 Console.Write(XTrainBatch[i, j]);
             }
         }
+        */
 
 
+/*
         Console.WriteLine();
         Console.WriteLine(YTrainBatch[0]);
         */
 
+        var M = XTrainBatch.GetLength(1);
+
         var neuralNet = new NeuralNet(XTrainBatch, YTrainBatch, 0.1f);
-        neuralNet.InitParams();
+        neuralNet.InitParams(M);
         neuralNet.GradientDescent();
+
+        /*
+        var example1 = new double[2,3] { {1f, 2f, 3f}, {4f, 5f, 6f} };
+        var example2 = new double[3,2] { {10f, 11f}, {20f, 21f}, {30f, 31f} };
+
+        var example3 = neuralNet.DotProduct(example1, example2);
+
+        for (var i = 0; i < example3.GetLength(0); i++)
+        {
+            Console.WriteLine();
+            for (var j = 0; j < example3.GetLength(1); j++)
+            {
+                Console.Write(example3[i,j]);
+                Console.Write(" ");
+            }
+        }
+        */
     }
 
     private static byte[] Fetch(string url)
@@ -87,24 +105,24 @@ public class Program
         }
     }
 
-    private static float[,] ReshapeData(byte[] data)
+    private static double[,] ReshapeData(byte[] data)
     {
         int numRows = data.Length / 784;
         int numCols = 784;
 
-        var reshapedData = new float[numRows, numCols];
+        var reshapedData = new double[numRows, numCols];
 
         for (var i = 0; i < data.Length; i++)
         {
             int row = i / numCols;
             int col = i % numCols;
-            reshapedData[row, col] = (float)data[i];
+            reshapedData[row, col] = (double)data[i];
         }
 
         return reshapedData;
     }
 
-    private static void PrintNumber(float[,] numData, float[] labelData, int index)
+    private static void PrintNumber(double[,] numData, double[] labelData, int index)
     {
         for (var i = 0; i < numData.GetLength(1); i += 1)
         {
@@ -113,7 +131,7 @@ public class Program
                 Console.WriteLine();
             }
 
-            Console.Write(numData[index, i] > 0 ? 1 : 0);
+            Console.Write(numData[index, i] > 0d ? 1 : 0);
         }
 
         Console.WriteLine();
@@ -121,9 +139,9 @@ public class Program
         Console.Write($"Label: {labelData[index]}");
     }
 
-    private static float[,] GetBatch(float[,] data, int batch, int startRow)
+    private static double[,] GetBatch(double[,] data, int batch, int startRow)
     { 
-        var batchData = new float[batch, data.GetLength(1)];
+        var batchData = new double[batch, data.GetLength(1)];
 
         for (var i = 0; i < batch; i++)
         {
@@ -136,9 +154,9 @@ public class Program
         return batchData;
     }
 
-    private static float[,] TransposeMatrix(float[,] matrix)
+    private static double[,] TransposeMatrix(double[,] matrix)
     { 
-        var transposedMatrix = new float[matrix.GetLength(1), matrix.GetLength(0)];
+        var transposedMatrix = new double[matrix.GetLength(1), matrix.GetLength(0)];
 
         for (var i = 0; i < matrix.GetLength(0); i++)
         {
@@ -150,5 +168,4 @@ public class Program
 
         return transposedMatrix;
     }
-
 }
