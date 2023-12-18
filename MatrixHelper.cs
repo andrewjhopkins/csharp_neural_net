@@ -12,21 +12,20 @@ public static class MatrixHelper
             for (int j = 0; j < cols; j++)
             {
                 // values between -0.5 and 0.5
-                // matrix[i, j] = (double)(random.NextDouble() - 0.5);
-                matrix[i, j] = 0.5f;
+                matrix[i, j] = (double)(random.NextDouble() - 0.5);
             }   
         }
 
         return matrix;
     }
 
-    public static double[,] Multiply(double multiplier, double[,] matrix)
+    public static double[,] Multiply(double value, double[,] matrix)
     {
         for (var i = 0; i < matrix.GetLength(0); i++)
         {
             for (var j = 0; j < matrix.GetLength(1); j++)
             {
-                matrix[i,j] *= multiplier;
+                matrix[i,j] *= value;
             }
         }
 
@@ -51,6 +50,19 @@ public static class MatrixHelper
         }
 
         return result;
+    }
+
+    public static double[,] Subtract(double value, double[,] matrix)
+    {
+        for (var i = 0; i < matrix.GetLength(0); i++)
+        {
+            for (var j = 0; j < matrix.GetLength(1); j++)
+            {
+                matrix[i,j] -= value;
+            }
+        }
+
+        return matrix;
     }
 
     public static double[,] Subtract(double[,] a, double[,] b)

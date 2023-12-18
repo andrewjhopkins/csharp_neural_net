@@ -23,45 +23,11 @@ public class Program
         var XTrainBatch = MatrixHelper.Multiply((double)1 / 255, MatrixHelper.TransposeMatrix(GetBatch(XTrain, samples, 0)));
         var YTrainBatch = YTrain.Take(samples).ToArray();
 
-/*
-        for (var i = 0; i < XTrainBatch.GetLength(0); i++)
-        {
-            Console.WriteLine();
-            for (var j = 0; j < XTrainBatch.GetLength(1); j++)
-            {
-                Console.Write(XTrainBatch[i, j]);
-            }
-        }
-        */
-
-
-/*
-        Console.WriteLine();
-        Console.WriteLine(YTrainBatch[0]);
-        */
-
         var M = XTrainBatch.GetLength(1);
 
         var neuralNet = new NeuralNet(XTrainBatch, YTrainBatch, 0.1f);
         neuralNet.InitParams(M);
-        neuralNet.GradientDescent();
-
-        /*
-        var example1 = new double[2,3] { {1f, 2f, 3f}, {4f, 5f, 6f} };
-        var example2 = new double[3,2] { {10f, 11f}, {20f, 21f}, {30f, 31f} };
-
-        var example3 = neuralNet.DotProduct(example1, example2);
-
-        for (var i = 0; i < example3.GetLength(0); i++)
-        {
-            Console.WriteLine();
-            for (var j = 0; j < example3.GetLength(1); j++)
-            {
-                Console.Write(example3[i,j]);
-                Console.Write(" ");
-            }
-        }
-        */
+        neuralNet.Run(100);
     }
 
     private static byte[] Fetch(string url)
