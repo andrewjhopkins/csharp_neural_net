@@ -76,7 +76,7 @@ public static class MatrixHelper
 
         for (var i = 0; i < a.GetLength(0); i++)
         {
-            for (var j = 0; j < a.GetLength(0); j++)
+            for (var j = 0; j < a.GetLength(1); j++)
             {
                 matrix[i,j] = a[i,j] - b[i,j];
             }

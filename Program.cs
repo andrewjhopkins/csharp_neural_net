@@ -18,14 +18,14 @@ public class Program
         var XTest = ReshapeData(Decompress(XTestCompressed).Skip(0x10).ToArray());
         var YTest = Decompress(YTestCompressed).Skip(8).Select(x => (double)x).ToArray();
 
-        var samples = 10;
+        var samples = 1000;
 
         var XTrainBatch = MatrixHelper.Multiply((double)1 / 255, MatrixHelper.TransposeMatrix(GetBatch(XTrain, samples, 0)));
         var YTrainBatch = YTrain.Take(samples).ToArray();
 
         var M = XTrainBatch.GetLength(1);
 
-        var neuralNet = new NeuralNet(XTrainBatch, YTrainBatch, 0.1f);
+        var neuralNet = new NeuralNet(XTrainBatch, YTrainBatch, 0.1d);
         neuralNet.InitParams(M);
         neuralNet.Run(100);
     }
