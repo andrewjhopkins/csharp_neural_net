@@ -20,7 +20,7 @@ public class Program
 
         var samples = 10;
 
-        var XTrainBatch = MatrixHelper.Multiply((double)1 / 255, TransposeMatrix(GetBatch(XTrain, samples, 0)));
+        var XTrainBatch = MatrixHelper.Multiply((double)1 / 255, MatrixHelper.TransposeMatrix(GetBatch(XTrain, samples, 0)));
         var YTrainBatch = YTrain.Take(samples).ToArray();
 
 /*
@@ -154,18 +154,4 @@ public class Program
         return batchData;
     }
 
-    private static double[,] TransposeMatrix(double[,] matrix)
-    { 
-        var transposedMatrix = new double[matrix.GetLength(1), matrix.GetLength(0)];
-
-        for (var i = 0; i < matrix.GetLength(0); i++)
-        {
-            for (var j = 0; j < matrix.GetLength(1); j++)
-            {
-                transposedMatrix[j, i] = matrix[i, j];
-            }
-        }
-
-        return transposedMatrix;
-    }
 }

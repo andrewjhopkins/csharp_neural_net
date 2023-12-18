@@ -1,4 +1,6 @@
-﻿namespace csharp_neural_net
+﻿using System.Runtime;
+
+namespace csharp_neural_net
 {
     public class NeuralNet
     {
@@ -29,34 +31,34 @@
 
         public void GradientDescent()
         { 
-            // Console.WriteLine(X);
-            // PrintMatrix(X);
-
             // forward pass
             var linearResult1 = Linear(Weights1, X, Bias1);
-
-            // Console.WriteLine("linearResult1");
-            // PrintMatrix(linearResult1);
-
             var activiationResult1 = ReLU(linearResult1);
-
             var linearResult2 = Linear(Weights2, activiationResult1, Bias2);
-
-            Console.WriteLine("linearResult2");
-            PrintMatrix(linearResult2);
-
             var activationResult2 = SoftMax(linearResult2);
 
-            Console.WriteLine("activationResult2");
-            PrintMatrix(linearResult2);
-
-            return;
-            
             // backward pass
-            var oneHotY = MatrixHelper.OneHotEncode(Y);
+            var oneHotY = MatrixHelper.TransposeMatrix(MatrixHelper.OneHotEncode(Y));
             var derivativeActivation2 = MatrixHelper.Subtract(activationResult2, oneHotY);
+            var derivativeWeights2 = MatrixHelper.Multiply(1/M, DotProduct(derivativeActivation2, MatrixHelper.TransposeMatrix(activiationResult1)));
 
-            var derivativeWeights2 = MatrixHelper.Multiply(1/M, DotProduct(derivativeActivation2, activiationResult1));
+            var derivativeActivationSum = 0d;
+
+            for (var i = 0; i < derivativeActivation2.GetLength(0); i++)
+            {
+                for (var j = 0; j < derivativeActivation2.GetLength(1); j++)
+                {
+                    derivativeActivationSum += derivativeActivation2[i,j];
+                }
+            }
+
+            var derivativeBias2 = 7.771561172376097E-17;
+
+            var derivativeActivation1 = MatrixHelper.Multiply(DotProduct(MatrixHelper.TransposeMatrix(Weights2), derivativeActivation2), ReLUDerivative(activiationResult1));
+
+            var derivativeWeights1 = MatrixHelper.Multiply(1/M, DotProduct(derivativeActivation1, MatrixHelper.TransposeMatrix(X)));
+
+
         }
 
         private double[,] ReLU(double[,] matrix)
@@ -87,21 +89,17 @@
 
         private double[,] SoftMax(double[,] matrix)
         { 
-            for (var i = 0; i < matrix.GetLength(1); i++)
+            for (var col = 0; col < matrix.GetLength(1); col++)
             {
                 var sum = 0d;
-                for (var j = 0; j < matrix.GetLength(0); j++)
+                for (var row = 0; row < matrix.GetLength(0); row++)
                 {
-                    sum += (double)matrix[j, i];
+                    sum += (double)Math.Exp(matrix[row,col]);
                 }
 
-                Console.WriteLine($"sum: {sum}");
-                Console.WriteLine($"sum: {Math.Exp(sum)}");
-
-
-                for (var j = 0; j < matrix.GetLength(1); j++)
+                for (var row = 0; row < matrix.GetLength(0); row++)
                 {
-                    matrix[i,j] = (double)Math.Exp(matrix[i, j]) / sum;
+                    matrix[row,col] = (double)Math.Exp(matrix[row,col]) / sum;
                 }
             }
 
