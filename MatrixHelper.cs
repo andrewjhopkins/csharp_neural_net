@@ -4,35 +4,35 @@ public static class MatrixHelper
 {
     public static double[,] GetRandomMatrix(int rows, int cols)
     { 
-        Random random = new Random();
+        var random = new Random();
 
         double[,] matrix = new double[rows, cols];
-        for (int i = 0; i < rows; i++)
+        for (int row = 0; row < rows; row++)
         { 
-            for (int j = 0; j < cols; j++)
+            for (int col = 0; col < cols; col++)
             {
                 // values between -0.5 and 0.5
-                matrix[i, j] = random.NextDouble() - 0.5;
+                matrix[row, col] = random.NextDouble() - 0.5;
             }   
         }
 
         return matrix;
     }
 
-    public static double[,] Multiply(double value, double[,] matrix)
+    public static double[,] MultiplyValue(double value, double[,] matrix)
     {
-        for (var i = 0; i < matrix.GetLength(0); i++)
+        for (var row = 0; row < matrix.GetLength(0); row++)
         {
-            for (var j = 0; j < matrix.GetLength(1); j++)
+            for (var col = 0; col < matrix.GetLength(1); col++)
             {
-                matrix[i,j] *= value;
+                matrix[row, col] *= value;
             }
         }
 
         return matrix;
     }
 
-    public static double[,] Multiply(double[,] matrix1, double[,] matrix2)
+    public static double[,] MultiplyValues(double[,] matrix1, double[,] matrix2)
     {
         if (matrix1.GetLength(0) != matrix2.GetLength(0) || matrix1.GetLength(1) != matrix2.GetLength(1))
         {
@@ -41,11 +41,11 @@ public static class MatrixHelper
 
         var result = new double[matrix1.GetLength(0), matrix2.GetLength(1)];
 
-        for (var i = 0; i < matrix1.GetLength(0); i++)
+        for (var row = 0; row < matrix1.GetLength(0); row++)
         {
-            for (var j = 0; j < matrix1.GetLength(1); j++)
+            for (var col = 0; col < matrix1.GetLength(1); col++)
             {
-                result[i,j] = matrix1[i,j] * matrix2[i,j];
+                result[row, col] = matrix1[row, col] * matrix2[row, col];
             }
         }
 
@@ -54,11 +54,11 @@ public static class MatrixHelper
 
     public static double[,] Subtract(double value, double[,] matrix)
     {
-        for (var i = 0; i < matrix.GetLength(0); i++)
+        for (var row = 0; row < matrix.GetLength(0); row++)
         {
-            for (var j = 0; j < matrix.GetLength(1); j++)
+            for (var col = 0; col < matrix.GetLength(1); col++)
             {
-                matrix[i,j] -= value;
+                matrix[row, col] -= value;
             }
         }
 
@@ -74,11 +74,11 @@ public static class MatrixHelper
 
         double[,] matrix = new double[matrix1.GetLength(0), matrix1.GetLength(1)];
 
-        for (var i = 0; i < matrix1.GetLength(0); i++)
+        for (var row = 0; row < matrix1.GetLength(0); row++)
         {
-            for (var j = 0; j < matrix1.GetLength(1); j++)
+            for (var col = 0; col < matrix1.GetLength(1); col++)
             {
-                matrix[i,j] = matrix1[i,j] - matrix2[i,j];
+                matrix[row, col] = matrix1[row, col] - matrix2[row, col];
             }
         }
 
@@ -101,14 +101,29 @@ public static class MatrixHelper
     { 
         var transposedMatrix = new double[matrix.GetLength(1), matrix.GetLength(0)];
 
-        for (var i = 0; i < matrix.GetLength(0); i++)
+        for (var row = 0; row < matrix.GetLength(0); row++)
         {
-            for (var j = 0; j < matrix.GetLength(1); j++)
+            for (var col = 0; col < matrix.GetLength(1); col++)
             {
-                transposedMatrix[j, i] = matrix[i, j];
+                transposedMatrix[col, row] = matrix[row, col];
             }
         }
 
         return transposedMatrix;
+    }
+
+    public static double[,] GetBatch(double[,] data, int batch, int startRow)
+    { 
+        var batchData = new double[batch, data.GetLength(1)];
+
+        for (var i = 0; i < batch; i++)
+        {
+            for (var j = 0; j < data.GetLength(1); j++)
+            {
+                batchData[i, j] = data[startRow + i, j];
+            }
+        }
+
+        return batchData;
     }
 }
