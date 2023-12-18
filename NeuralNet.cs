@@ -9,6 +9,7 @@ public class NeuralNet
     public double[,] Bias1 { get; set; }
     public double[,] Weights2 { get; set; }
     public double[,] Bias2 { get; set; }
+    public double[,] Predictions { get; set; }
 
     public NeuralNet(double[,] x, double[] y, double learningRate)
     {
@@ -28,9 +29,35 @@ public class NeuralNet
 
     public void Run(int epochs)
     {
-        for (var i = 0; i < epochs; i++)
+        for (var run = 0; run < epochs; run++)
         {
             GradientDescent();
+            if (run % 10 == 0)
+            {
+                var correct = 0;
+
+                for (var i = 0; i < Predictions.GetLength(1); i++)
+                {
+                    int maxIndex = 0;
+
+
+                    for (var j = 1; j < Predictions.GetLength(0); j++)
+                    {
+                        if (Predictions[j, i] > Predictions[maxIndex, i])
+                        {
+                            maxIndex = j;
+                        }
+                    }
+
+                    if (maxIndex == Y[i])
+                    {
+                        correct += 1;
+                    }
+                }
+
+                var accuracy = (double)correct / Y.Length;
+                Console.WriteLine($"Accuracy: {accuracy}");
+            }
         }
     }
 
@@ -38,9 +65,13 @@ public class NeuralNet
     {
         // forward pass
         var linearResult1 = Linear(Weights1, X, Bias1);
+
         var activiationResult1 = ReLU(linearResult1);
+
         var linearResult2 = Linear(Weights2, activiationResult1, Bias2);
+
         var activationResult2 = SoftMax(linearResult2);
+        Predictions = activationResult2;
 
         // backward pass
         var oneHotY = MatrixHelper.TransposeMatrix(MatrixHelper.OneHotEncode(Y));
@@ -171,7 +202,6 @@ public class NeuralNet
 
     private void PrintMatrix(double[,] matrix)
     {
-        Console.WriteLine($"{matrix.GetLength(0)}, {matrix.GetLength(1)}");
 
         for (var i = 0; i < matrix.GetLength(0); i++)
         {
