@@ -14,14 +14,20 @@ public class Program
         byte[] YTestCompressed = Fetch("http://yann.lecun.com/exdb/mnist/t10k-labels-idx1-ubyte.gz");
 
         var XTrain = ReshapeData(Decompress(XTrainCompressed).Skip(0x10).ToArray());
-        var YTrain = Decompress(YTrainCompressed).Skip(8).Select(x => (float) x ).ToArray();
+        var YTrain = Decompress(YTrainCompressed).Skip(8).Select(x => (double)x).ToArray();
         var XTest = ReshapeData(Decompress(XTestCompressed).Skip(0x10).ToArray());
-        var YTest = Decompress(YTestCompressed).Skip(8).Select(x => (float) x ).ToArray();
+        var YTest = Decompress(YTestCompressed).Skip(8).Select(x => (double)x).ToArray();
 
-        // PrintNumber(XTrain, YTrain, 4);
+        var samples = 10;
 
-        var neuralNet = new NeuralNet(XTrain, YTrain, 0.1f);
-        neuralNet.InitParams();
+        var XTrainBatch = MatrixHelper.Multiply((double)1 / 255, MatrixHelper.TransposeMatrix(GetBatch(XTrain, samples, 0)));
+        var YTrainBatch = YTrain.Take(samples).ToArray();
+
+        var M = XTrainBatch.GetLength(1);
+
+        var neuralNet = new NeuralNet(XTrainBatch, YTrainBatch, 0.1f);
+        neuralNet.InitParams(M);
+        neuralNet.Run(100);
     }
 
     private static byte[] Fetch(string url)
@@ -65,24 +71,24 @@ public class Program
         }
     }
 
-    private static float[,] ReshapeData(byte[] data)
+    private static double[,] ReshapeData(byte[] data)
     {
         int numRows = data.Length / 784;
         int numCols = 784;
 
-        var reshapedData = new float[numRows, numCols];
+        var reshapedData = new double[numRows, numCols];
 
-        for (int i = 0; i < data.Length; i++)
+        for (var i = 0; i < data.Length; i++)
         {
             int row = i / numCols;
             int col = i % numCols;
-            reshapedData[row, col] = (float)data[i];
+            reshapedData[row, col] = (double)data[i];
         }
 
         return reshapedData;
     }
 
-    private static void PrintNumber(float[,] numData, float[] labelData, int index)
+    private static void PrintNumber(double[,] numData, double[] labelData, int index)
     {
         for (var i = 0; i < numData.GetLength(1); i += 1)
         {
@@ -91,11 +97,27 @@ public class Program
                 Console.WriteLine();
             }
 
-            Console.Write(numData[index, i] > 0 ? 1 : 0);
+            Console.Write(numData[index, i] > 0d ? 1 : 0);
         }
 
         Console.WriteLine();
 
         Console.Write($"Label: {labelData[index]}");
     }
+
+    private static double[,] GetBatch(double[,] data, int batch, int startRow)
+    { 
+        var batchData = new double[batch, data.GetLength(1)];
+
+        for (var i = 0; i < batch; i++)
+        {
+            for (var j = 0; j < data.GetLength(1); j++)
+            {
+                batchData[i, j] = data[startRow + i, j];
+            }
+        }
+
+        return batchData;
+    }
+
 }
