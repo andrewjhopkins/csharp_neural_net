@@ -84,6 +84,20 @@ public static class MatrixHelper
 
         return matrix;
     }
+    public static double Sum(double[,] matrix)
+    {
+        var sum = 0d;
+
+        for (var row = 0; row < matrix.GetLength(0); row++)
+        { 
+            for (var col = 0; col < matrix.GetLength(1); col++)
+            {
+                sum += matrix[row, col];
+            }
+        }
+
+        return sum;
+    }
 
     public static double[,] OneHotEncode(double[] y)
     { 
@@ -116,14 +130,85 @@ public static class MatrixHelper
     { 
         var batchData = new double[batch, data.GetLength(1)];
 
-        for (var i = 0; i < batch; i++)
+        for (var row = 0; row < batch; row++)
         {
-            for (var j = 0; j < data.GetLength(1); j++)
+            for (var col = 0; col < data.GetLength(1); col++)
             {
-                batchData[i, j] = data[startRow + i, j];
+                batchData[row, col] = data[startRow + row, col];
             }
         }
 
         return batchData;
+    }
+
+    public static double[,] DotProduct(double[,] a, double[,] b)
+    {
+        if (a.GetLength(1) != b.GetLength(0))
+        {
+            throw new Exception("Matrices can not be multipled");
+        }
+
+        double[,] result = new double[a.GetLength(0), b.GetLength(1)];
+
+        for (int i = 0; i < a.GetLength(0); i++)
+        {
+            for (int j = 0; j < b.GetLength(1); j++)
+            {
+                double sum = 0;
+                for (int k = 0; k < a.GetLength(1); k++)
+                {
+                    sum += a[i, k] * b[k, j];
+                }
+
+                result[i, j] = sum;
+            }   
+        }
+
+        return result;
+    }
+
+    public static double[,] SoftMax(double[,] matrix)
+    { 
+        for (var col = 0; col < matrix.GetLength(1); col++)
+        {
+            var sum = 0d;
+            for (var row = 0; row < matrix.GetLength(0); row++)
+            {
+                sum += (double)Math.Exp(matrix[row,col]);
+            }
+
+            for (var row = 0; row < matrix.GetLength(0); row++)
+            {
+                matrix[row,col] = (double)Math.Exp(matrix[row,col]) / sum;
+            }
+        }
+
+        return matrix;
+    }
+
+    public static double[,] ReLU(double[,] matrix)
+    { 
+        for (var row = 0; row < matrix.GetLength(0); row++)
+        {
+            for (var col = 0; col < matrix.GetLength(1); col++)
+            {
+                matrix[row, col] = Math.Max(0, matrix[row, col]);
+            }
+        }
+
+        return matrix;
+    }
+
+    public static double[,] ReLUDerivative(double[,] matrix)
+    { 
+        for (var row = 0; row < matrix.GetLength(0); row++)
+        {
+            for (var col = 0; col < matrix.GetLength(1); col++)
+            {
+                matrix[row, col] = matrix[row, col] > 0 ? 1 : 0;
+            }
+        }
+
+        return matrix;
     }
 }
