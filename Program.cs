@@ -4,10 +4,14 @@ using System.Security.Cryptography;
 using System.Text;
 
 namespace csharp_neural_net;
+
 public class Program
 {
     public static void Main(string[] args)
     {
+        var batchSize = args.Length > 0 ? int.Parse(args[0]) : 100;
+        var iterations = args.Length > 1 ? int.Parse(args[1]) : 3000;
+
         var XTrainCompressed = Fetch("http://yann.lecun.com/exdb/mnist/train-images-idx3-ubyte.gz");
         var YTrainCompressed = Fetch("http://yann.lecun.com/exdb/mnist/train-labels-idx1-ubyte.gz");
         var XTestCompressed = Fetch("http://yann.lecun.com/exdb/mnist/t10k-images-idx3-ubyte.gz");
@@ -22,7 +26,14 @@ public class Program
         XTrain = MatrixHelper.MultiplyValue(1d / 255, XTrain);
 
         var neuralNet = new NeuralNet(XTrain, YTrain);
-        neuralNet.Run(5000, 100, 0.1d);
+        neuralNet.Run(batchSize, iterations, 0.1d);
+
+        Console.WriteLine("Calculating accuracy on test data...");
+
+        XTest = MatrixHelper.TransposeMatrix(MatrixHelper.MultiplyValue(1d / 255, XTest));
+
+        var accuracy = neuralNet.GetAccuracy(XTest, YTest);
+        Console.WriteLine($"Test Data Accuracy: {accuracy}");
     }
 
     private static byte[] Fetch(string url)
