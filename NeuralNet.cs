@@ -1,7 +1,6 @@
 ﻿namespace csharp_neural_net;
 public class NeuralNet
 {
-    public int BatchSize { get; set; }
     public double[,] X { get; set; }
     public double[] Y { get; set; }
     public double SampleSize { get; set; }
@@ -32,27 +31,8 @@ public class NeuralNet
 
             if (run % 10 == 0)
             {
-                var correct = 0;
-
-                for (var i = 0; i < Predictions.GetLength(1); i++)
-                {
-                    int maxIndex = 0;
-                    for (var j = 1; j < Predictions.GetLength(0); j++)
-                    {
-                        if (Predictions[j, i] > Predictions[maxIndex, i])
-                        {
-                            maxIndex = j;
-                        }
-                    }
-
-                    if (maxIndex == Y[i + randIndex])
-                    {
-                        correct += 1;
-                    }
-                }
-
-                var accuracy = (double)correct / yBatch.Length;
-                Console.WriteLine($"Accuracy: {accuracy}");
+                var accuracy = GetAccuracy(xBatch, yBatch, Predictions);
+                Console.WriteLine($"Accuracy: {accuracy}, Iteration: {run}");
             }
         }
     }
@@ -101,6 +81,34 @@ public class NeuralNet
         var linearResult2 = Linear(Weights2, activiationResult1, Bias2);
         var activationResult2 = MatrixHelper.SoftMax(linearResult2);
         return activationResult2;
+    }
+
+    public double GetAccuracy(double[,] x, double[] y, double[,] predictions = null)
+    {
+        if (predictions == null)
+        {
+            predictions = GetPredictions(x);
+        }
+
+        var correct = 0;
+        for (var i = 0; i < predictions.GetLength(1); i++)
+        {
+            int maxIndex = 0;
+            for (var j = 1; j < predictions.GetLength(0); j++)
+            {
+                if (predictions[j, i] > predictions[maxIndex, i])
+                {
+                    maxIndex = j;
+                }
+            }
+
+            if (maxIndex == y[i])
+            {
+                correct += 1;
+            }
+        }
+
+        return (double)correct / y.Length;
     }
 
     private double[,] Linear(double[,] weights, double[,] x, double[,] bias)
