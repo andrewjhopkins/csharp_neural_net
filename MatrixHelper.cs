@@ -99,9 +99,9 @@ public static class MatrixHelper
         return sum;
     }
 
-    public static double[,] OneHotEncode(double[] y)
+    public static double[,] OneHotEncode(double[] y, int size)
     { 
-        var oneHotMatrix = new double[y.Length, (int)y.Max() + 1];
+        var oneHotMatrix = new double[y.Length, size];
 
         for (var i = 0; i < y.Length; i++)
         {
