@@ -8,26 +8,21 @@ public class Program
 {
     public static void Main(string[] args)
     {
-        byte[] XTrainCompressed = Fetch("http://yann.lecun.com/exdb/mnist/train-images-idx3-ubyte.gz");
-        byte[] YTrainCompressed = Fetch("http://yann.lecun.com/exdb/mnist/train-labels-idx1-ubyte.gz");
-        byte[] XTestCompressed = Fetch("http://yann.lecun.com/exdb/mnist/t10k-images-idx3-ubyte.gz");
-        byte[] YTestCompressed = Fetch("http://yann.lecun.com/exdb/mnist/t10k-labels-idx1-ubyte.gz");
+        var XTrainCompressed = Fetch("http://yann.lecun.com/exdb/mnist/train-images-idx3-ubyte.gz");
+        var YTrainCompressed = Fetch("http://yann.lecun.com/exdb/mnist/train-labels-idx1-ubyte.gz");
+        var XTestCompressed = Fetch("http://yann.lecun.com/exdb/mnist/t10k-images-idx3-ubyte.gz");
+        var YTestCompressed = Fetch("http://yann.lecun.com/exdb/mnist/t10k-labels-idx1-ubyte.gz");
 
         var XTrain = ReshapeData(Decompress(XTrainCompressed).Skip(0x10).ToArray());
         var YTrain = Decompress(YTrainCompressed).Skip(8).Select(x => (double)x).ToArray();
         var XTest = ReshapeData(Decompress(XTestCompressed).Skip(0x10).ToArray());
         var YTest = Decompress(YTestCompressed).Skip(8).Select(x => (double)x).ToArray();
 
-        var samples = 1000;
+        // normalize
+        XTrain = MatrixHelper.MultiplyValue(1d / 255, XTrain);
 
-        var XTrainBatch = MatrixHelper.Multiply((double)1 / 255, MatrixHelper.TransposeMatrix(GetBatch(XTrain, samples, 0)));
-        var YTrainBatch = YTrain.Take(samples).ToArray();
-
-        var M = XTrainBatch.GetLength(1);
-
-        var neuralNet = new NeuralNet(XTrainBatch, YTrainBatch, 0.1d);
-        neuralNet.InitParams(M);
-        neuralNet.Run(100);
+        var neuralNet = new NeuralNet(XTrain, YTrain);
+        neuralNet.Run(5000, 100, 0.1d);
     }
 
     private static byte[] Fetch(string url)
@@ -41,7 +36,7 @@ public class Program
         else
         {
             byte[] data;
-            using (WebClient client = new WebClient())
+            using (var client = new WebClient())
             {
                 data = client.DownloadData(url);
             }
@@ -53,9 +48,9 @@ public class Program
 
     private static string GetMd5Hash(string input)
     {
-        using (MD5 md5 = MD5.Create())
+        using (var md5 = MD5.Create())
         {
-            byte[] data = md5.ComputeHash(Encoding.UTF8.GetBytes(input));
+            var data = md5.ComputeHash(Encoding.UTF8.GetBytes(input));
             return BitConverter.ToString(data).Replace("-", "").ToLower();
         }
     }
@@ -103,21 +98,6 @@ public class Program
         Console.WriteLine();
 
         Console.Write($"Label: {labelData[index]}");
-    }
-
-    private static double[,] GetBatch(double[,] data, int batch, int startRow)
-    { 
-        var batchData = new double[batch, data.GetLength(1)];
-
-        for (var i = 0; i < batch; i++)
-        {
-            for (var j = 0; j < data.GetLength(1); j++)
-            {
-                batchData[i, j] = data[startRow + i, j];
-            }
-        }
-
-        return batchData;
     }
 
 }

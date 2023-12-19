@@ -1,37 +1,35 @@
 ﻿namespace csharp_neural_net;
 public class NeuralNet
 {
+    public int BatchSize { get; set; }
     public double[,] X { get; set; }
     public double[] Y { get; set; }
-    public double M { get; set; }
-    public double LearningRate { get; set; }
+    public double SampleSize { get; set; }
     public double[,] Weights1 { get; set; }
     public double[,] Bias1 { get; set; }
     public double[,] Weights2 { get; set; }
     public double[,] Bias2 { get; set; }
     public double[,] Predictions { get; set; }
 
-    public NeuralNet(double[,] x, double[] y, double learningRate)
+    public NeuralNet(double[,] x, double[] y)
     {
         X = x;
         Y = y;
-        LearningRate = learningRate;
     }
 
-    public void InitParams(double m)
+    public void Run(int iterations, int batchSize, double learningRate)
     {
-        M = m;
-        Weights1 = MatrixHelper.GetRandomMatrix(10, 784);
-        Bias1 = MatrixHelper.GetRandomMatrix(10, 1);
-        Weights2 = MatrixHelper.GetRandomMatrix(10, 10);
-        Bias2 = MatrixHelper.GetRandomMatrix(10, 1);
-    }
+        InitParams(batchSize);
 
-    public void Run(int epochs)
-    {
-        for (var run = 0; run < epochs; run++)
+        for (var run = 0; run < iterations; run++)
         {
-            GradientDescent();
+            var randIndex = new Random().Next(0, X.GetLength(0) - batchSize);
+
+            var xBatch = MatrixHelper.TransposeMatrix(MatrixHelper.GetBatch(X, batchSize, randIndex));
+            var yBatch = Y.Skip(randIndex).Take(batchSize).ToArray();
+
+            GradientDescent(xBatch, yBatch, learningRate);
+
             if (run % 10 == 0)
             {
                 var correct = 0;
@@ -39,8 +37,6 @@ public class NeuralNet
                 for (var i = 0; i < Predictions.GetLength(1); i++)
                 {
                     int maxIndex = 0;
-
-
                     for (var j = 1; j < Predictions.GetLength(0); j++)
                     {
                         if (Predictions[j, i] > Predictions[maxIndex, i])
@@ -49,119 +45,59 @@ public class NeuralNet
                         }
                     }
 
-                    if (maxIndex == Y[i])
+                    if (maxIndex == Y[i + randIndex])
                     {
                         correct += 1;
                     }
                 }
 
-                var accuracy = (double)correct / Y.Length;
+                var accuracy = (double)correct / yBatch.Length;
                 Console.WriteLine($"Accuracy: {accuracy}");
             }
         }
     }
+    private void InitParams(double sampleSize)
+    {
+        SampleSize = sampleSize;
+        Weights1 = MatrixHelper.GetRandomMatrix(10, 784);
+        Bias1 = MatrixHelper.GetRandomMatrix(10, 1);
+        Weights2 = MatrixHelper.GetRandomMatrix(10, 10);
+        Bias2 = MatrixHelper.GetRandomMatrix(10, 1);
+    }
 
-    public void GradientDescent()
+    private void GradientDescent(double[,] x, double[] y, double learningRate)
     {
         // forward pass
-        var linearResult1 = Linear(Weights1, X, Bias1);
-
-        var activiationResult1 = ReLU(linearResult1);
-
+        var linearResult1 = Linear(Weights1, x, Bias1);
+        var activiationResult1 = MatrixHelper.ReLU(linearResult1);
         var linearResult2 = Linear(Weights2, activiationResult1, Bias2);
-
-        var activationResult2 = SoftMax(linearResult2);
+        var activationResult2 = MatrixHelper.SoftMax(linearResult2);
         Predictions = activationResult2;
 
         // backward pass
-        var oneHotY = MatrixHelper.TransposeMatrix(MatrixHelper.OneHotEncode(Y));
+        var oneHotY = MatrixHelper.TransposeMatrix(MatrixHelper.OneHotEncode(y));
         var derivativeActivation2 = MatrixHelper.Subtract(activationResult2, oneHotY);
-        var derivativeWeights2 = MatrixHelper.Multiply(1 / M, DotProduct(derivativeActivation2, MatrixHelper.TransposeMatrix(activiationResult1)));
+        var derivativeWeights2 = MatrixHelper.MultiplyValue(1 / SampleSize, MatrixHelper.DotProduct(derivativeActivation2, MatrixHelper.TransposeMatrix(activiationResult1)));
 
-        var derivativeActivation2Sum = 0d;
+        var derivativeBias2 = MatrixHelper.Sum(derivativeActivation2) / SampleSize;
 
-        for (var i = 0; i < derivativeActivation2.GetLength(0); i++)
-        {
-            for (var j = 0; j < derivativeActivation2.GetLength(1); j++)
-            {
-                derivativeActivation2Sum += derivativeActivation2[i, j];
-            }
-        }
+        var derivativeActivation1 = MatrixHelper.MultiplyValues(MatrixHelper.DotProduct(MatrixHelper.TransposeMatrix(Weights2), derivativeActivation2), MatrixHelper.ReLUDerivative(activiationResult1));
 
-        var derivativeBias2 = derivativeActivation2Sum / M;
+        var derivativeWeights1 = MatrixHelper.MultiplyValue(1 / SampleSize, MatrixHelper.DotProduct(derivativeActivation1, MatrixHelper.TransposeMatrix(x)));
 
-        var derivativeActivation1 = MatrixHelper.Multiply(DotProduct(MatrixHelper.TransposeMatrix(Weights2), derivativeActivation2), ReLUDerivative(activiationResult1));
-
-        var derivativeWeights1 = MatrixHelper.Multiply(1 / M, DotProduct(derivativeActivation1, MatrixHelper.TransposeMatrix(X)));
-
-        var derivativeActivation1Sum = 0d;
-
-        for (var i = 0; i < derivativeActivation1.GetLength(0); i++)
-        { 
-            for (var j = 0; j < derivativeActivation1.GetLength(1); j++)
-            {
-                derivativeActivation1Sum += derivativeActivation1[i, j];
-            }
-        }
-
-        var derivativeBias1 = derivativeActivation1Sum / M;
+        var derivativeBias1 = MatrixHelper.Sum(derivativeActivation1) / SampleSize;
 
         // update weights
-        Weights1 = MatrixHelper.Subtract(Weights1, MatrixHelper.Multiply(LearningRate, derivativeWeights1));
-        Weights2 = MatrixHelper.Subtract(Weights2, MatrixHelper.Multiply(LearningRate, derivativeWeights2));
+        Weights1 = MatrixHelper.Subtract(Weights1, MatrixHelper.MultiplyValue(learningRate, derivativeWeights1));
+        Weights2 = MatrixHelper.Subtract(Weights2, MatrixHelper.MultiplyValue(learningRate, derivativeWeights2));
 
-        Bias1 = MatrixHelper.Subtract(LearningRate * derivativeBias1, Bias1);
-        Bias2 = MatrixHelper.Subtract(LearningRate * derivativeBias2, Bias2);
-    }
-
-    private double[,] ReLU(double[,] matrix)
-    { 
-        for (var i = 0; i < matrix.GetLength(0); i++)
-        {
-            for (var j = 0; j < matrix.GetLength(1); j++)
-            {
-                matrix[i, j] = Math.Max(0, matrix[i, j]);
-            }
-        }
-
-        return matrix;
-    }
-
-    private double[,] ReLUDerivative(double[,] matrix)
-    { 
-        for (var i = 0; i < matrix.GetLength(0); i++)
-        {
-            for (var j = 0; j < matrix.GetLength(1); j++)
-            {
-                matrix[i, j] = matrix[i, j] > 0 ? 1 : 0;
-            }
-        }
-
-        return matrix;
-    }
-
-    private double[,] SoftMax(double[,] matrix)
-    { 
-        for (var col = 0; col < matrix.GetLength(1); col++)
-        {
-            var sum = 0d;
-            for (var row = 0; row < matrix.GetLength(0); row++)
-            {
-                sum += (double)Math.Exp(matrix[row,col]);
-            }
-
-            for (var row = 0; row < matrix.GetLength(0); row++)
-            {
-                matrix[row,col] = (double)Math.Exp(matrix[row,col]) / sum;
-            }
-        }
-
-        return matrix;
+        Bias1 = MatrixHelper.Subtract(learningRate * derivativeBias1, Bias1);
+        Bias2 = MatrixHelper.Subtract(learningRate * derivativeBias2, Bias2);
     }
 
     private double[,] Linear(double[,] weights, double[,] x, double[,] bias)
     {
-        var mx = DotProduct(weights, x);
+        var mx = MatrixHelper.DotProduct(weights, x);
 
         for (var i = 0; i < mx.GetLength(0); i++)
         {
@@ -174,35 +110,8 @@ public class NeuralNet
         return mx;
     }
 
-    public double[,] DotProduct(double[,] a, double[,] b)
-    {
-        if (a.GetLength(1) != b.GetLength(0))
-        {
-            throw new Exception("Matrices can not be multipled");
-        }
-
-        double[,] result = new double[a.GetLength(0), b.GetLength(1)];
-
-        for (int i = 0; i < a.GetLength(0); i++)
-        {
-            for (int j = 0; j < b.GetLength(1); j++)
-            {
-                double sum = 0;
-                for (int k = 0; k < a.GetLength(1); k++)
-                {
-                    sum += a[i, k] * b[k, j];
-                }
-
-                result[i, j] = sum;
-            }   
-        }
-
-        return result;
-    }
-
     private void PrintMatrix(double[,] matrix)
     {
-
         for (var i = 0; i < matrix.GetLength(0); i++)
         {
             Console.WriteLine();
