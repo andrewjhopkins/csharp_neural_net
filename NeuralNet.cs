@@ -90,9 +90,17 @@ public class NeuralNet
         // update weights
         Weights1 = MatrixHelper.Subtract(Weights1, MatrixHelper.MultiplyValue(learningRate, derivativeWeights1));
         Weights2 = MatrixHelper.Subtract(Weights2, MatrixHelper.MultiplyValue(learningRate, derivativeWeights2));
-
         Bias1 = MatrixHelper.Subtract(learningRate * derivativeBias1, Bias1);
         Bias2 = MatrixHelper.Subtract(learningRate * derivativeBias2, Bias2);
+    }
+
+    public double[,] GetPredictions(double[,] x)
+    { 
+        var linearResult1 = Linear(Weights1, x, Bias1);
+        var activiationResult1 = MatrixHelper.ReLU(linearResult1);
+        var linearResult2 = Linear(Weights2, activiationResult1, Bias2);
+        var activationResult2 = MatrixHelper.SoftMax(linearResult2);
+        return activationResult2;
     }
 
     private double[,] Linear(double[,] weights, double[,] x, double[,] bias)

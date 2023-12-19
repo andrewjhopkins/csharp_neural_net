@@ -21,8 +21,36 @@ public class Program
         // normalize
         XTrain = MatrixHelper.MultiplyValue(1d / 255, XTrain);
 
+
         var neuralNet = new NeuralNet(XTrain, YTrain);
-        neuralNet.Run(5000, 100, 0.1d);
+        neuralNet.Run(5000, 300, 0.1d);
+
+        Console.WriteLine("Calculating accuracy on test data...");
+
+        XTest = MatrixHelper.TransposeMatrix(MatrixHelper.MultiplyValue(1d / 255, XTest));
+        var predictions = neuralNet.GetPredictions(XTest);
+
+        var correct = 0;
+
+        for (var i = 0; i < predictions.GetLength(1); i++)
+        {
+            int maxIndex = 0;
+            for (var j = 1; j < predictions.GetLength(0); j++)
+            {
+                if (predictions[j, i] > predictions[maxIndex, i])
+                {
+                    maxIndex = j;
+                }
+            }
+
+            if (maxIndex == YTest[i])
+            {
+                correct += 1;
+            }
+        }
+
+        var accuracy = (double)correct / YTest.Length;
+        Console.WriteLine($"Test Accuracy: {accuracy}");
     }
 
     private static byte[] Fetch(string url)
