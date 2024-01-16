@@ -141,7 +141,7 @@ public static class MatrixHelper
         return batchData;
     }
 
-    public static double[,] DotProduct(double[,] a, double[,] b)
+    public static double[,] MatMul(double[,] a, double[,] b)
     {
         if (a.GetLength(1) != b.GetLength(0))
         {
@@ -210,5 +210,20 @@ public static class MatrixHelper
         }
 
         return matrix;
+    }
+
+    public static double CrossEntropyLoss(double[,] predictions, double[,] targets)
+    {
+        var sum = 0d;
+
+        for (var row = 0; row < predictions.GetLength(0); row++)
+        {
+            for (var col = 0; col < predictions.GetLength(1); col++)
+            {
+                sum += -Math.Log(predictions[row, col]) * targets[row, col];
+            }
+        }
+
+        return sum / predictions.GetLength(1);
     }
 }
